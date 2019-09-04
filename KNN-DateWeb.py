@@ -16,11 +16,14 @@ def classify0(inX, dataSet, labels, k):
     diffMat = numpy.tile(inX, (dataSetSize, 1)) - dataSet
     sqDiffMat = diffMat ** 2
     sqDistances = sqDiffMat.sum(axis=1)
+    distances = sqDistances ** 0.5
+    sortedDistIndicies = distances.argsort()
     classCount={}
     for i in range(k):
-        voteIlabel = labels[sqDistances[i]]
+        voteIlabel = labels[sortedDistIndicies[i]]
         classCount[voteIlabel] = classCount.get(voteIlabel,0)+1
-        soredClassCount = sorted(classCount.iteritems(), key=operator.itemgetter(1), reverse=True)
+    soredClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
+    return soredClassCount[0][0]   #返回类别最多的类别
 
 
 def file2matrix(filename):
@@ -48,3 +51,19 @@ def autoNorm(dataSet):
     normDataSet = normDataSet / numpy.tile(ranges, (m, 1))
     return normDataSet, ranges, minVals
 
+def datingClassTest():
+    hoRatio = 0.1  #取出10%的数据作为测试数据
+    datingDataMat, datingLabels = file2matrix('datingTestSet2.txt')  #将数据进行分类
+    normMat, ranges, minVals = autoNorm(datingDataMat) #归一化数据
+    m=normMat.shape[0]            #算出数据的从行数
+    numTestVecs = int(m*hoRatio)  #算出测试数据个数
+    errorCount=0.0  #错误数量
+    for i in range(numTestVecs):
+        classifierResult = classify0(normMat[i, :], normMat[numTestVecs:m], datingLabels[numTestVecs:m], 3)
+        print("the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i]))
+        if (classifierResult!=datingLabels[i]):
+            errorCount+=1.0
+    print("the total error rate is : %f" % (errorCount / float(numTestVecs)))
+
+
+datingClassTest()
